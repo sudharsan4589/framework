@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Results - Feature Prioritization Framework{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold text-dark mb-3">
+            <i class="fas fa-chart-bar text-primary me-3"></i>
+            Analysis Results
+        </h1>
+        <p class="lead text-muted">
+            Comprehensive analysis of {{ total_features }} feature{{ 's' if total_features != 1 else '' }}
+        </p>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <a href="{{ url_for('index') }}" class="btn btn-primary me-2">
+                <i class="fas fa-plus me-2"></i>Add More Features
+            </a>
+            <a href="{{ url_for('export') }}" class="btn btn-success me-2">
+                <i class="fas fa-download me-2"></i>Export Results
+            </a>
+            <a href="{{ url_for('clear') }}" class="btn btn-outline-danger me-2" 
+               onclick="return confirm('Are you sure you want to clear all features?')">
+                <i class="fas fa-trash me-2"></i>Clear All
+            </a>
+            <button class="btn btn-info" onclick="loadVisualizations()">
+                <i class="fas fa-chart-pie me-2"></i>Load Visualizations
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-chart-line text-primary fa-2x mb-2"></i>
+                    <h4 class="card-title">{{ total_features }}</h4>
+                    <p class="card-text text-muted">Total Features</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-star text-warning fa-2x mb-2"></i>
+                    <h4 class="card-title">{{ comparison_data|selectattr('recommendation', 'equalto', 'STRONGLY RECOMMEND')|list|length }}</h4>
+                    <p class="card-text text-muted">Strongly Recommended</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-exclamation-triangle text-danger fa-2x mb-2"></i>
+                    <h4 class="card-title">{{ comparison_data|selectattr('risk_level', 'equalto', 'HIGH')|list|length }}</h4>
+                    <p class="card-text text-muted">High Risk Features</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-dollar-sign text-success fa-2x mb-2"></i>
+                    <h4 class="card-title">${{ "%.0f"|format(comparison_data|sum(attribute='key_metrics.revenue_potential')|float) }}</h4>
+                    <p class="card-text text-muted">Total Revenue Potential</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-table me-2"></i>
+                Feature Comparison Table
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Feature Name</th>
+                            <th>Viability Score</th>
+                            <th>Priority Score</th>
+                            <th>ROI Score</th>
+                            <th>Risk Level</th>
+                            <th>Recommendation</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for feature in comparison_data %}
+                        <tr>
+                            <td>
+                                <strong>{{ feature.feature_name }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    Revenue: ${{ "%.0f"|format(feature.key_metrics.revenue_potential) }} | 
+                                    Time: {{ feature.key_metrics.time_savings_per_week }}h/week
+                                </small>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if feature.viability_score >= 8 else 'warning' if feature.viability_score >= 6 else 'danger' }}">
+                                    {{ "%.1f"|format(feature.viability_score) }}/10
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if feature.priority_score >= 8 else 'warning' if feature.priority_score >= 6 else 'danger' }}">
+                                    {{ "%.1f"|format(feature.priority_score) }}/10
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ "%.1f"|format(feature.roi_score) }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if feature.risk_level == 'LOW' else 'warning' if feature.risk_level == 'MEDIUM' else 'danger' }}">
+                                    {{ feature.risk_level }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge recommendation-{{ feature.recommendation.lower().replace(' ', '-') }}">
+                                    {{ feature.recommendation }}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="showFeatureDetails('{{ feature.feature_name }}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Individual Feature Analytics -->
+    <div class="row">
+        {% for analytics in analytics %}
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        {{ analytics.feature_name }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 text-center">
+                            <div class="feature-score">{{ "%.1f"|format(analytics.viability_score) }}</div>
+                            <small class="text-muted">Viability Score</small>
+                        </div>
+                        <div class="col-6 text-center">
+                            <div class="feature-score">{{ "%.1f"|format(analytics.priority_score) }}</div>
+                            <small class="text-muted">Priority Score</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">ROI Score:</small><br>
+                            <strong>{{ "%.1f"|format(analytics.roi_score) }}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Time Efficiency:</small><br>
+                            <strong>{{ "%.1f"|format(analytics.time_efficiency_score) }}/10</strong>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">Risk Level:</small><br>
+                            <span class="badge bg-{{ 'success' if analytics.risk_level == 'LOW' else 'warning' if analytics.risk_level == 'MEDIUM' else 'danger' }}">
+                                {{ analytics.risk_level }}
+                            </span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Recommendation:</small><br>
+                            <span class="badge recommendation-{{ analytics.recommendation.lower().replace(' ', '-') }}">
+                                {{ analytics.recommendation }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Visualizations -->
+    <div id="visualizations" class="mt-5">
+        <div class="loading" id="loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Generating visualizations...</p>
+        </div>
+        
+        <div id="charts-container" style="display: none;">
+            <div class="row">
+                <div class="col-lg-6 mb-4">
+                    <div class="visualization-container">
+                        <h5 class="text-center mb-3">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Priority Score Comparison
+                        </h5>
+                        <img id="priority-comparison" class="img-fluid" alt="Priority Score Comparison">
+                    </div>
+                </div>
+                <div class="col-lg-6 mb-4">
+                    <div class="visualization-container">
+                        <h5 class="text-center mb-3">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Viability vs ROI
+                        </h5>
+                        <img id="viability-roi" class="img-fluid" alt="Viability vs ROI">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-6 mb-4">
+                    <div class="visualization-container">
+                        <h5 class="text-center mb-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Risk vs Priority Matrix
+                        </h5>
+                        <img id="risk-priority" class="img-fluid" alt="Risk vs Priority Matrix">
+                    </div>
+                </div>
+                <div class="col-lg-6 mb-4">
+                    <div class="visualization-container">
+                        <h5 class="text-center mb-3">
+                            <i class="fas fa-chart-pie me-2"></i>
+                            Recommendation Distribution
+                        </h5>
+                        <img id="recommendation-distribution" class="img-fluid" alt="Recommendation Distribution">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Feature Details Modal -->
+<div class="modal fade" id="featureModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Feature Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="featureModalBody">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function loadVisualizations() {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('charts-container').style.display = 'none';
+        
+        fetch('/api/visualizations')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error loading visualizations: ' + data.error);
+                    return;
+                }
+                
+                // Load images
+                document.getElementById('priority-comparison').src = 'data:image/png;base64,' + data.priority_comparison;
+                document.getElementById('viability-roi').src = 'data:image/png;base64,' + data.viability_roi;
+                document.getElementById('risk-priority').src = 'data:image/png;base64,' + data.risk_priority;
+                document.getElementById('recommendation-distribution').src = 'data:image/png;base64,' + data.recommendation_distribution;
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('charts-container').style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error loading visualizations');
+                document.getElementById('loading').style.display = 'none';
+            });
+    }
+    
+    function showFeatureDetails(featureName) {
+        // Find the analytics for this feature
+        const analyticsData = {{ analytics|tojson }};
+        const feature = analyticsData.find(f => f.feature_name === featureName);
+        
+        if (!feature) return;
+        
+        const modalBody = document.getElementById('featureModalBody');
+        modalBody.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Key Metrics</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Revenue Potential:</strong> $${feature.key_metrics.revenue_potential.toLocaleString()}</li>
+                        <li><strong>Time Savings:</strong> ${feature.key_metrics.time_savings_per_week} hours/week</li>
+                        <li><strong>Development Cost:</strong> $${feature.key_metrics.development_cost.toLocaleString()}</li>
+                        <li><strong>Implementation Time:</strong> ${feature.key_metrics.implementation_time}</li>
+                        <li><strong>User Impact:</strong> ${feature.key_metrics.user_impact}</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>Scores</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Viability Score:</strong> ${feature.viability_score}/10</li>
+                        <li><strong>Priority Score:</strong> ${feature.priority_score}/10</li>
+                        <li><strong>ROI Score:</strong> ${feature.roi_score}</li>
+                        <li><strong>Time Efficiency:</strong> ${feature.time_efficiency_score}/10</li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Assessment</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Product Impact Level:</strong> ${feature.product_impact_level}</li>
+                        <li><strong>Risk Level:</strong> ${feature.risk_level}</li>
+                        <li><strong>Recommendation:</strong> ${feature.recommendation}</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>Analysis</h6>
+                    <p class="text-muted">
+                        This feature has a ${feature.viability_score >= 8 ? 'high' : feature.viability_score >= 6 ? 'moderate' : 'low'} 
+                        viability score and is ${feature.recommendation.toLowerCase()}.
+                        ${feature.risk_level === 'HIGH' ? 'Note: This feature carries high risk and should be carefully evaluated.' : ''}
+                    </p>
+                </div>
+            </div>
+        `;
+        
+        new bootstrap.Modal(document.getElementById('featureModal')).show();
+    }
+    
+    // Auto-load visualizations after page load
+    window.addEventListener('load', function() {
+        setTimeout(loadVisualizations, 1000);
+    });
+</script>
+{% endblock %} 

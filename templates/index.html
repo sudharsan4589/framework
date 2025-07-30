@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Add Features - Feature Prioritization Framework{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold text-dark mb-3">
+                    <i class="fas fa-plus-circle text-primary me-3"></i>
+                    Add New Feature
+                </h1>
+                <p class="lead text-muted">
+                    Enter feature details to evaluate its viability and priority
+                </p>
+            </div>
+
+            <!-- Feature Input Form -->
+            <div class="card">
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('add_feature') }}" id="featureForm">
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Basic Information
+                                </h5>
+                            </div>
+                            <div class="col-12">
+                                <label for="feature_name" class="form-label fw-bold">Feature Name *</label>
+                                <input type="text" class="form-control" id="feature_name" name="feature_name" 
+                                       placeholder="e.g., Advanced Analytics Dashboard" required>
+                                <div class="form-text">Enter a descriptive name for the feature</div>
+                            </div>
+                        </div>
+
+                        <!-- Impact Metrics -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary mb-3">
+                                    <i class="fas fa-chart-line me-2"></i>
+                                    Impact Metrics
+                                </h5>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="product_impact_score" class="form-label fw-bold">Product Impact Score (1-10) *</label>
+                                <input type="number" class="form-control" id="product_impact_score" name="product_impact_score" 
+                                       min="1" max="10" step="0.1" placeholder="8.5" required>
+                                <div class="form-text">How much does this feature improve the product?</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="revenue_potential" class="form-label fw-bold">Revenue Potential ($) *</label>
+                                <input type="number" class="form-control" id="revenue_potential" name="revenue_potential" 
+                                       min="0" step="1000" placeholder="50000" required>
+                                <div class="form-text">Expected revenue generation in currency</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="time_savings_hours" class="form-label fw-bold">Time Savings (hours/week) *</label>
+                                <input type="number" class="form-control" id="time_savings_hours" name="time_savings_hours" 
+                                       min="0" step="0.5" placeholder="15" required>
+                                <div class="form-text">Hours saved per week for users/team</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="user_impact_percentage" class="form-label fw-bold">User Impact (%) *</label>
+                                <input type="number" class="form-control" id="user_impact_percentage" name="user_impact_percentage" 
+                                       min="0" max="100" step="1" placeholder="75" required>
+                                <div class="form-text">Percentage of users affected (0-100)</div>
+                            </div>
+                        </div>
+
+                        <!-- Implementation Metrics -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary mb-3">
+                                    <i class="fas fa-cogs me-2"></i>
+                                    Implementation Metrics
+                                </h5>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="development_cost" class="form-label fw-bold">Development Cost ($) *</label>
+                                <input type="number" class="form-control" id="development_cost" name="development_cost" 
+                                       min="0" step="1000" placeholder="25000" required>
+                                <div class="form-text">Implementation cost in currency</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="implementation_time_weeks" class="form-label fw-bold">Implementation Time (weeks) *</label>
+                                <input type="number" class="form-control" id="implementation_time_weeks" name="implementation_time_weeks" 
+                                       min="1" step="0.5" placeholder="8" required>
+                                <div class="form-text">Weeks required for development</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="technical_complexity" class="form-label fw-bold">Technical Complexity (1-10) *</label>
+                                <input type="number" class="form-control" id="technical_complexity" name="technical_complexity" 
+                                       min="1" max="10" step="0.1" placeholder="7.0" required>
+                                <div class="form-text">Implementation difficulty (1=easy, 10=very complex)</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="risk_score" class="form-label fw-bold">Risk Score (1-10) *</label>
+                                <input type="number" class="form-control" id="risk_score" name="risk_score" 
+                                       min="1" max="10" step="0.1" placeholder="4.0" required>
+                                <div class="form-text">Implementation and business risks (1=low, 10=high)</div>
+                            </div>
+                        </div>
+
+                        <!-- Market & Strategy -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary mb-3">
+                                    <i class="fas fa-globe me-2"></i>
+                                    Market & Strategy
+                                </h5>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="market_demand_score" class="form-label fw-bold">Market Demand Score (1-10) *</label>
+                                <input type="number" class="form-control" id="market_demand_score" name="market_demand_score" 
+                                       min="1" max="10" step="0.1" placeholder="9.0" required>
+                                <div class="form-text">Market need and demand (1=low, 10=high)</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="strategic_alignment" class="form-label fw-bold">Strategic Alignment (1-10) *</label>
+                                <input type="number" class="form-control" id="strategic_alignment" name="strategic_alignment" 
+                                       min="1" max="10" step="0.1" placeholder="9.0" required>
+                                <div class="form-label">Alignment with company strategy (1=low, 10=high)</div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                <button type="submit" class="btn btn-primary btn-lg me-3">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Add Feature
+                                </button>
+                                                <a href="{{ url_for('load_demo') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-play me-2"></i>
+                    Load Demo Data
+                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Help Section -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="text-primary mb-3">
+                        <i class="fas fa-question-circle me-2"></i>
+                        Scoring Guidelines
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Product Impact Score:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>8-10:</strong> Critical feature, major product improvement</li>
+                                <li><strong>6-7:</strong> Important feature, significant improvement</li>
+                                <li><strong>4-5:</strong> Moderate feature, some improvement</li>
+                                <li><strong>1-3:</strong> Minor feature, minimal improvement</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Risk Score:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>1-3:</strong> Low risk, well-understood technology</li>
+                                <li><strong>4-6:</strong> Medium risk, some uncertainty</li>
+                                <li><strong>7-10:</strong> High risk, new/unproven technology</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Form validation
+    document.getElementById('featureForm').addEventListener('submit', function(e) {
+        const requiredFields = this.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
+    });
+    
+    // Real-time validation
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+        input.addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            const min = parseFloat(this.min);
+            const max = parseFloat(this.max);
+            
+            if (this.value && (value < min || value > max)) {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+            }
+        });
+    });
+</script>
+{% endblock %} 
